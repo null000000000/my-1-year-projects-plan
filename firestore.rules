@@ -1,0 +1,76 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Safety Net - Default Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper Primitives
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation for UserProject entity
+    function isValidUserProject(data, userId, projectId) {
+      return data.userId == userId &&
+        data.projectId == projectId &&
+        data.status in ['Not Started', 'In Progress', 'Blocked', 'Completed'] &&
+        data.updatedAt is string && data.updatedAt.size() <= 64 &&
+        (!('repositoryUrl' in data) || (data.repositoryUrl is string && data.repositoryUrl.size() <= 1000)) &&
+        (!('demoUrl' in data) || (data.demoUrl is string && data.demoUrl.size() <= 1000)) &&
+        (!('reportUrl' in data) || (data.reportUrl is string && data.reportUrl.size() <= 1000)) &&
+        (!('linkedinUrl' in data) || (data.linkedinUrl is string && data.linkedinUrl.size() <= 1000)) &&
+        (!('projectSummary' in data) || (data.projectSummary is string && data.projectSummary.size() <= 20000)) &&
+        (!('currentFocus' in data) || (data.currentFocus is string && data.currentFocus.size() <= 5000)) &&
+        (!('journalEntries' in data) || (data.journalEntries is list && data.journalEntries.size() <= 500)) &&
+        (!('subprojectStatuses' in data) || data.subprojectStatuses is map) &&
+        (!('subprojectDates' in data) || data.subprojectDates is map);
+    }
+
+    // Validation for UserMetadata
+    function isValidUserMetadata(data, userId) {
+      return data.userId == userId &&
+        data.overallProgress is number &&
+        data.completedCoreCount is number &&
+        data.totalCoreCount is number &&
+        data.updatedAt is string && data.updatedAt.size() <= 64;
+    }
+
+    // User Projects collection
+    match /users/{userId}/projects/{projectId} {
+      allow get: if isOwner(userId) && isValidId(projectId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidId(projectId) && isValidUserProject(incoming(), userId, projectId);
+      allow update: if isOwner(userId) && isValidId(projectId) && 
+        incoming().userId == existing().userId && 
+        incoming().projectId == existing().projectId && 
+        isValidUserProject(incoming(), userId, projectId);
+      allow delete: if isOwner(userId) && isValidId(projectId);
+    }
+
+    // User Metadata
+    match /users/{userId}/meta/progress {
+      allow get: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidUserMetadata(incoming(), userId);
+      allow delete: if isOwner(userId);
+    }
+  }
+}

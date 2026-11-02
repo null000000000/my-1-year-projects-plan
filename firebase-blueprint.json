@@ -1,0 +1,115 @@
+{
+  "entities": {
+    "UserProject": {
+      "title": "User Project",
+      "description": "Progress, statuses, and journal records for a flagship security project",
+      "type": "object",
+      "properties": {
+        "projectId": {
+          "type": "string",
+          "description": "Flagship project ID, e.g. P01 to P12",
+          "maxLength": 10,
+          "pattern": "^P[0-9]{2}$"
+        },
+        "userId": {
+          "type": "string",
+          "description": "Owner user UID",
+          "maxLength": 128
+        },
+        "status": {
+          "type": "string",
+          "description": "Project status",
+          "enum": ["Not Started", "In Progress", "Blocked", "Completed"]
+        },
+        "repositoryUrl": {
+          "type": "string",
+          "description": "Link to repository",
+          "maxLength": 1000
+        },
+        "demoUrl": {
+          "type": "string",
+          "description": "Link to demo or lab",
+          "maxLength": 1000
+        },
+        "reportUrl": {
+          "type": "string",
+          "description": "Link to assessment report",
+          "maxLength": 1000
+        },
+        "linkedinUrl": {
+          "type": "string",
+          "description": "Link to LinkedIn writeup",
+          "maxLength": 1000
+        },
+        "projectSummary": {
+          "type": "string",
+          "description": "Project-level summary and notes",
+          "maxLength": 20000
+        },
+        "currentFocus": {
+          "type": "string",
+          "description": "Current next focus or action",
+          "maxLength": 5000
+        },
+        "subprojectStatuses": {
+          "type": "object",
+          "description": "Map of subproject ID to status"
+        },
+        "subprojectDates": {
+          "type": "object",
+          "description": "Map of subproject ID to started and completed dates"
+        },
+        "journalEntries": {
+          "type": "array",
+          "description": "List of journal entries for this project and its subprojects"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Timestamp string of last modification",
+          "maxLength": 64
+        }
+      },
+      "required": ["projectId", "userId", "status", "updatedAt"]
+    },
+    "UserMetadata": {
+      "title": "User Metadata",
+      "description": "Overall roadmap progress and summary statistics",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string",
+          "description": "User UID",
+          "maxLength": 128
+        },
+        "overallProgress": {
+          "type": "number",
+          "description": "Calculated core subproject completion percentage"
+        },
+        "completedCoreCount": {
+          "type": "number",
+          "description": "Total number of completed core subprojects"
+        },
+        "totalCoreCount": {
+          "type": "number",
+          "description": "Total number of core subprojects (158)"
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "Last synced timestamp",
+          "maxLength": 64
+        }
+      },
+      "required": ["userId", "overallProgress", "completedCoreCount", "totalCoreCount", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}/projects/{projectId}": {
+      "schema": "UserProject",
+      "description": "Stores status, notes, and journal entries for flagship projects"
+    },
+    "/users/{userId}/meta/progress": {
+      "schema": "UserMetadata",
+      "description": "Stores user aggregate roadmap progress and statistics"
+    }
+  }
+}

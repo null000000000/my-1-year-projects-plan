@@ -1,0 +1,6 @@
+{
+  "name": "YEAR 01 — Security Project Flow",
+  "description": "Interactive visual roadmap & personal engineering journal for the 12-project security engineering curriculum.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
